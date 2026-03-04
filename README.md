@@ -27,7 +27,7 @@ If something is wrong, the program prints a warning message and stops early. Thi
 
 **What I learned / issue I ran into:** grid coordinates are accessed using grid[y][x]. Without bounds checks I was getting crashes when I accidentally went outside the grid or placed the start/goal on a wall. The validation fixed this and made debugging easier with th error messages.
 
-## Quick tests I tried (trial and error)
+## Quick tests I tried
 - **Test 1:** Goal at (5,5) on a 5x5 grid  
   **Expected:** “Goal is out of bounds!”  
   **Result:** PASS
@@ -57,5 +57,46 @@ I printed the start node values to confirm the scoring is correct before expandi
 
 **Next step:** pick the node with the lowest `f` from OPEN, move it to CLOSED, then generate neighbours 4 directions first. After that I will add parent tracking properly so I can reconstruct and print the final path.
 
-## AI usage (brief)
+## AI usage 
 AI was used to help explain A* steps and to help me plan weekly milestones. All code was written and tested by me.
+
+# Third week of project
+This week I made the code cleaner and more like proper OOP by moving the create start node logic into its own function. My lecturer mentioned it is better to test small logic parts like this instead of having everything inside one big function, so I refactored it into `makeStartNode()`.
+
+The idea of this function is to set up the very first node for A* correctly:
+- it takes in the start (sx, sy) and goal (gx, gy)
+- it sets g = 0 because the start node has no movement cost yet
+- it calculates h using Manhattan distance
+- it sets f = g + h
+- it sets the parent values to -1 because the start node has no parent
+
+This makes it easier to reuse later and also easier to test, because I can call this function with known start/goal values and check the output.
+
+**Code example**
+<img width="429" height="232" alt="image" src="https://github.com/user-attachments/assets/3c70bc8d-5c3a-425c-83b4-a956ae83f2f4" />
+
+## Continuing A* setup picking q + generating neighbours
+After getting the start node working, I moved on to the next A* steps from the pseudocode.
+
+First, I added the part where A* picks the node with the lowest f value from the OPEN list, this node is called q. Once q is picked, I remove it from OPEN and move it into the CLOSED list. This basically means that node has now been visited and I am finished with it.
+
+At the start I was a bit confused why we need both OPEN and CLOSED, but printing the sizes helped me understand it:
+- OPEN is what still needs to be explored
+- CLOSED is what has already been explored
+
+After that, I added neighbour generation for q. For now I am only doing 4-direction movement (up, down, left, right) to keep it simple. Each neighbour gets checked first:
+- if it is outside the grid bounds, it is skipped
+- if it is a wall #, it is skipped
+
+If it is valid, I create a new node and calculate:
+- g = q.g + 1
+- h = Manhattan distance from the neighbour to the goal
+- f = g + h
+
+I also set the parent of each neighbour node to q using parentX and parentY. This will matter later when I need to rebuild the final route from the goal back to the start.
+
+With my current grid I noticed that a lot of directions get skipped because of # walls, which was a good way to confirm the obstacle checks are working properly.
+
+**Code example**
+
+<img width="618" height="431" alt="image" src="https://github.com/user-attachments/assets/7ee2b8d4-3359-4bdf-bf02-f396e5c4c7a2" />
