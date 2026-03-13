@@ -207,5 +207,176 @@ cur basically means current node. I set cur to the goal node first, then I keep 
 
 <img width="501" height="321" alt="image" src="https://github.com/user-attachments/assets/65eabf88-e1a7-476e-8ea0-bfe9e2c0bdd2" />
 
+# Project Management
 
+## Planning Approach
 
+I did not really go into this with a detailed plan from the start if 
+I am being honest. My approach was to use each lab session as a 
+checkpoint and just figure out the next step at the end of each week. 
+It sounds a bit loose but it actually suited this project well because 
+each piece depended on the previous one working first.
+
+Like there was no point thinking about path reconstruction in week one 
+when I had not even written the A* loop yet. Each week I would get 
+something working, make sure it was correct, and then write down what 
+I wanted to do next before the following session.
+
+## Weekly Milestones
+
+| Week | Goal | Completed |
+|------|------|-----------|
+| 1 | Research A*, set up project structure, basic grid | ✅ |
+| 2 | Add input validation, set up Node struct and OPEN list | ✅ |
+| 3 | Refactor into makeStartNode(), add neighbour generation | ✅ |
+| 4 | Full A* loop, path reconstruction, Maps.cpp, findPath() refactor, PASS/FAIL tests | ✅ |
+
+## Progress Tracking
+
+The lab sessions were basically my only real tracking method. Each 
+one acted as a deadline — I wanted to have something new working and 
+demonstrable each week. The "Next step" notes I left at the end of 
+each week in the report also helped a lot because it meant when I sat 
+down the following week I already knew what I was supposed to be doing 
+instead of having to figure it out again.
+
+I also committed to GitHub regularly which was handy because it meant 
+I could go back if something broke after a refactor, which did happen.
+
+## What I Would Do Differently
+
+Looking back, having even a rough plan at the start would have helped. 
+Week four especially got quite heavy — the full A* loop, path 
+reconstruction, the Maps refactor, the findPath() refactor, and the 
+test set all ended up in the same week. If I had spread some of that 
+out earlier it would have been a lot less stressful. Next time I would 
+at least write down three or four rough milestones at the start just 
+to stop everything piling up at the end.
+
+# Reflection
+
+## Biggest Challenge — Understanding A*
+
+Honestly the biggest challenge was just understanding how A* actually 
+works before I could write any of it. I knew the general idea of 
+pathfinding going in but I did not really understand how the OPEN list, 
+CLOSED list and the f = g + h scoring all fit together well enough to 
+just sit down and implement it.
+
+The way I got around it was breaking it down step by step instead of 
+trying to write the whole thing at once. I started by just getting the 
+start node set up and printing the g, h and f values to make sure they 
+were right. Then I added picking q from OPEN, then neighbour generation, 
+and only after all that did I try the full loop. That made debugging way 
+easier because at each stage I knew exactly what the output should look 
+like.
+
+The moment it actually clicked for me was when I started printing the 
+sizes of OPEN and CLOSED during the search. Seeing OPEN shrink and 
+CLOSED grow made it make sense — OPEN is what still needs to be 
+explored, CLOSED is what has already been dealt with. Once I got that 
+the rest followed pretty naturally.
+
+## Other Problems I Hit
+
+One early bug that annoyed me for a while was accessing grid coordinates 
+as `grid[x][y]` instead of `grid[y][x]`. Because the grid is stored as 
+rows the outer index is y and the inner index is x, which is the opposite 
+of what I expected. It was causing crashes that were hard to spot. Adding 
+the bounds validation fixed it and the error messages made debugging a 
+lot easier after that.
+
+Another thing was that `Astar.cpp` got really hard to follow as the 
+project grew. The A* logic and all the printing were mixed together and 
+I kept getting lost in my own code. I fixed it by splitting things into 
+`findPath()` for the actual algorithm and keeping the output stuff inside 
+`printGrid()`. Both functions got shorter and it was much easier to work 
+with after that.
+
+## What I Would Do Differently
+
+If I started again I would use `std::priority_queue` for the OPEN list 
+from the beginning instead of a plain `std::vector`. Right now finding 
+the lowest f node means scanning the whole OPEN list every iteration 
+which is O(n). A priority queue keeps the lowest f node at the top 
+automatically so it would be O(log n) instead. I kept the vector because 
+it was easier to debug early on and I could just print the whole list 
+out, but knowing what I know now I would just take the slightly harder 
+setup for the better performance from day one.
+
+## What Worked Well
+
+The step by step approach worked really well for me. Because I was only 
+adding one thing at a time bugs were usually in whatever I had just 
+written rather than buried somewhere across the whole codebase. Adding 
+the PASS/FAIL tests mid-project was probably the best decision I made 
+— when I refactored `findPath()` out of `printGrid()` I just ran the 
+tests straight away and could see immediately that nothing had broken. 
+That made me a lot more confident about making changes later on.
+
+# Limitations & Future Work
+
+## Current Limitations
+
+### Maps Are Hardcoded
+The most obvious limitation is that the maps are hardcoded in `Maps.cpp` 
+as `std::vector<std::string>`. So if I want to test a different layout 
+I have to go into the source code, edit it, recompile and run again. It 
+is fine for this project but it is pretty annoying in practice and would 
+not scale at all. Loading maps from a `.txt` file at runtime would fix 
+this completely and is something I would add with more time.
+
+### OPEN List Performance
+The OPEN list is a `std::vector<Node>` which means every iteration has 
+to scan the whole list to find the lowest f node. That is O(n) per 
+iteration. For the small 5x5 maps I am using it makes no difference at 
+all, but on a bigger grid with hundreds of nodes it would get slow fast. 
+Replacing it with a `std::priority_queue` would bring it down to O(log n) 
+and is the standard way to do it properly.
+
+### Small Map Size
+All three maps are 5x5 grids which is fine for testing that the algorithm 
+is correct but too small to really show what A* can do. The whole point 
+of A* is handling larger search spaces efficiently and the current maps 
+do not demonstrate that at all.
+
+## Future Work
+
+The thing I would add first is larger and more complex maps. A 20x20 or 
+50x50 grid would be a much better demonstration of the algorithm and it 
+would also make the performance difference between the vector scan and a 
+priority queue actually visible, which would give a real reason to make 
+that upgrade rather than just a theoretical one.
+
+After that, loading maps from a `.txt` file would make the whole project 
+a lot more flexible and would get rid of the need to recompile every time 
+I want to try a different layout.
+
+## AI Usage
+AI was used in two ways during this project. First I used it to help 
+explain how A* works — things like why the heuristic needs to be 
+admissible and how the OPEN and CLOSED lists interact. This helped me 
+understand the algorithm faster than just reading about it. Second I 
+used it to help structure and improve the report, making sure the 
+explanations were clear. All code was written and tested by me — AI 
+was not used to generate any of it.
+
+# References
+
+Amit Patel, *Introduction to A\**, Red Blob Games.
+Available at: https://www.redblobgames.com/pathfinding/a-star/introduction.html
+
+cppreference.com, *std::vector*, C++ Reference.
+Available at: https://en.cppreference.com/w/cpp/container/vector
+
+cppreference.com, *std::priority\_queue*, C++ Reference.
+Available at: https://en.cppreference.com/w/cpp/container/priority_queue
+
+Wikipedia, *A\* search algorithm*.
+Available at: https://en.wikipedia.org/wiki/A*_search_algorithm
+
+daancode, *a-star*, GitHub.
+Available at: https://github.com/daancode/a-star
+
+justinhj, *astar-algorithm-cpp*, GitHub.
+Available at: https://github.com/justinhj/astar-algorithm-cpp
