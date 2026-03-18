@@ -207,11 +207,26 @@ cur basically means current node. I set cur to the goal node first, then I keep 
 
 <img width="501" height="321" alt="image" src="https://github.com/user-attachments/assets/65eabf88-e1a7-476e-8ea0-bfe9e2c0bdd2" />
 
-## Week 5 – Improving the A* Implementation with `std::priority_queue`
+## Why A* Works — Understanding the Heuristic
+
+One thing I wanted to make sure I understood properly was why A* actually finds the shortest path, not just that it does.
+The key is that the heuristic h must be admissible — it must never overestimate the true cost to reach the goal. Manhattan distance satisfies this for 4-direction grid movement because the real path can only be equal to or longer than the straight-line Manhattan distance. You cannot get from point A to point B in fewer moves than |dx| + |dy| when you can only move up, down, left, or right.
+If the heuristic overestimated, A* would deprioritise nodes that are actually closer to the goal and could return a suboptimal path. If h = 0 (no heuristic at all), A* degrades into Dijkstra's algorithm and expands every reachable node — correct, but much slower.
+This is why heuristic choice matters. For this project, Manhattan distance is the right fit because it matches the movement model exactly.
+
+## Week 5 – Improving the A* Implementation 
 
 During Week 5, I focused on improving the internal implementation of my A* algorithm rather than only adding more visible output. My earlier version stored the OPEN set in a `std::vector` and manually searched through it during each iteration to find the node with the lowest `f` value. While this worked correctly for small maps, it was not the most suitable structure for this task because it required repeatedly scanning the full OPEN list.
 
 To improve this, I refactored the algorithm to use `std::priority_queue`. This made the implementation more aligned with modern C++ and with the use of the Standard Library expected in the project brief. Since A* always needs to expand the node with the lowest estimated total cost `f = g + h`, a priority-based structure is a better fit than a normal vector.
+
+To better demonstrate what A* is actually doing, I added a fourth map (getMap4_Large) — a 15×30 winding maze. The 5×5 maps from earlier are useful for testing correctness, but they are too small to show meaningful pathfinding behaviour. A* expands very few nodes on a 5×5 grid and the path is trivially short.
+
+<img width="922" height="627" alt="image" src="https://github.com/user-attachments/assets/92b3629c-8f48-4a76-a11f-bb2c9f82a8cc" />
+
+What "nodes expanded" means: Every time A* pops a node from the OPEN list and processes it, that counts as one expansion. The low number on Map4 (44 expansions for a 43-step path) shows the heuristic is working well — A* is barely exploring any dead ends. It is following the heuristic guidance closely and expanding almost only the nodes that end up on the final path.
+This is the advantage of A* over a blind search like BFS. BFS would expand every reachable node in order of distance from the start, potentially visiting hundreds of cells before reaching the goal. A* focuses the search toward the goal using h, which keeps nodes expanded low.
+
 
 ### Why I made this change
 
@@ -300,24 +315,30 @@ the PASS/FAIL tests mid-project was probably the best decision I made
 tests straight away and could see immediately that nothing had broken. 
 That made me a lot more confident about making changes later on.
 
-# Limitations & Future Work
+## Understanding Nodes Expanded
+One thing that helped my understanding a lot was tracking nodes expanded throughout the project. When I ran the algorithm on Map2 (5×5) it expanded 15 nodes to find an 8-step path. On Map4 (15×30) it expanded just 44 nodes to find a 43-step path.
+That ratio — almost 1:1 between steps and nodes expanded — shows the heuristic is doing its job. A* is barely wasting effort on dead ends because Manhattan distance is guiding it toward the goal efficiently. If I set h = 0 (turning it into Dijkstra's), the nodes expanded would increase significantly because the algorithm would have no directional bias. This comparison made the purpose of the heuristic concrete for me in a way that just reading about it did not.
+
+## Limitations & Future Work
 
 ## Current Limitations
 
-### Maps Are Hardcoded
-The most obvious limitation is that the maps are hardcoded in `Maps.cpp` 
-as `std::vector<std::string>`. So if I want to test a different layout 
-I have to go into the source code, edit it, recompile and run again. It 
-is fine for this project but it is pretty annoying in practice and would 
-not scale at all. Loading maps from a `.txt` file at runtime would fix 
-this completely and is something I would add with more time.
+## Maps Are Hardcoded
 
-### Small Map Size
-All three maps are 5x5 grids which is fine for testing that the algorithm is correct but too small to really show what A* can do. The whole point of A* is handling larger search spaces efficiently and the current maps do not demonstrate that at all.
+The maps are defined as std::vector<std::string> in Maps.cpp. To test a different layout the source code must be edited and recompiled. Loading maps from a .txt file at runtime would fix this and make the project far more flexible.
+Only 4-Directional Movement
+The current implementation supports movement in four directions only — up, down, left, right. A* is equally suited to 8-direction movement (adding diagonals), but this would require a different heuristic. Manhattan distance is only admissible for 4-direction grids. For 8-direction movement, the correct heuristic is Chebyshev distance:
+cpph = max(abs(x - gx), abs(y - gy));
+Using Manhattan distance with diagonal movement would cause it to overestimate in some cases, breaking the admissibility guarantee and potentially producing suboptimal paths.
+Uniform Edge Costs
+Every move costs 1, which means A* behaves similarly to BFS with a heuristic. A* is specifically designed to handle weighted graphs — for example, a swamp tile ~ could cost 3 moves while a road . costs 1. Without weighted edges the algorithm's full potential is not demonstrated.
 
 ## Future Work
-
-The thing I would add first is larger and more complex maps. A 20x20 or 50x50 grid would be a much better demonstration of the algorithm and it would also make the performance difference between the vector scan and a priority queue actually visible, which would give a real reason to make that upgrade rather than just a theoretical one.
+The first thing I would add is weighted terrain — a ~ tile with a higher movement cost. This would require changing the neighbour cost from a fixed +1 to a lookup based on the tile type:
+cppint tileCost = (grid[ny][nx] == '~') ? 3 : 1;
+int newG = q.g + tileCost;
+This small change would make the path avoid swamp tiles when a longer but cheaper route exists, which is exactly the kind of problem A* is built to solve.
+After that, loading maps from a .txt file and adding 8-direction movement with Chebyshev distance would make the project significantly more complete.
 
 After that, loading maps from a `.txt` file would make the whole project a lot more flexible and would get rid of the need to recompile every time I want to try a different layout.
 
