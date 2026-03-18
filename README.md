@@ -207,6 +207,23 @@ cur basically means current node. I set cur to the goal node first, then I keep 
 
 <img width="501" height="321" alt="image" src="https://github.com/user-attachments/assets/65eabf88-e1a7-476e-8ea0-bfe9e2c0bdd2" />
 
+## Week 5 – Improving the A* Implementation with `std::priority_queue`
+
+During Week 5, I focused on improving the internal implementation of my A* algorithm rather than only adding more visible output. My earlier version stored the OPEN set in a `std::vector` and manually searched through it during each iteration to find the node with the lowest `f` value. While this worked correctly for small maps, it was not the most suitable structure for this task because it required repeatedly scanning the full OPEN list.
+
+To improve this, I refactored the algorithm to use `std::priority_queue`. This made the implementation more aligned with modern C++ and with the use of the Standard Library expected in the project brief. Since A* always needs to expand the node with the lowest estimated total cost `f = g + h`, a priority-based structure is a better fit than a normal vector.
+
+### Why I made this change
+
+The main reason for this change was that the OPEN set in A* is naturally a priority-based structure. In my original version, I had to manually loop through the vector to find the best node each time. That approach was functional, but not ideal from a design point of view.
+
+By switching to `std::priority_queue`, I made the code better suited to the problem. I also used a custom comparison function so that the node with the **lowest** `f` value would be selected first, with the heuristic `h` used as a tie-breaker when two nodes had the same `f` score.
+
+### Example of the updated code
+
+<img width="846" height="445" alt="image" src="https://github.com/user-attachments/assets/18354bc3-9436-49f2-a0d4-3e8b8bb23d49" />
+
+
 # Project Management
 
 ## Planning Approach
@@ -225,7 +242,7 @@ I wanted to do next before the following session.
 | 2 | Add input validation, set up Node struct and OPEN list | ✅ |
 | 3 | Refactor into makeStartNode(), add neighbour generation | ✅ |
 | 4 | Full A* loop, path reconstruction, Maps.cpp, findPath() refactor, PASS/FAIL tests | ✅ |
-| 5 | Making Finishing touches to my Report | ✅ |
+| 5 | Making Finishing touches to my Report + making code more modern Cpp| ✅ |
 
 ## Progress Tracking
 
@@ -267,14 +284,11 @@ with after that.
 
 ## What I Would Do Differently
 
-If I started again I would use `std::priority_queue` for the OPEN list 
-from the beginning instead of a plain `std::vector`. Right now finding 
-the lowest f node means scanning the whole OPEN list every iteration 
-which is O(n). A priority queue keeps the lowest f node at the top 
-automatically so it would be O(log n) instead. I kept the vector because 
-it was easier to debug early on and I could just print the whole list 
-out, but knowing what I know now I would just take the slightly harder 
-setup for the better performance from day one.
+If I started the project again, I would introduce `std::priority_queue` much earlier in the development process rather than first implementing the OPEN list with a plain `std::vector`. I originally chose the vector approach because it was simpler to debug while I was still learning and testing the structure of the A* algorithm. It allowed me to inspect the contents of the OPEN list more easily and helped me confirm that the algorithm was behaving correctly in the early stages.
+
+As my understanding improved, I replaced this with `std::priority_queue`, which is a much more suitable STL container for the OPEN set in A*. Since the algorithm always selects the node with the lowest `f` value next, a priority-based structure is the more appropriate choice. This improved the overall design of the project and made the implementation more consistent with modern C++ and the expectations of the brief.
+
+The main thing I would do differently, therefore, is not the final decision itself, but the timing of that decision. I would move to the more suitable data structure earlier, so that the project would benefit from that stronger design choice from the beginning rather than through later refactoring.
 
 ## What Worked Well
 
@@ -297,9 +311,6 @@ I have to go into the source code, edit it, recompile and run again. It
 is fine for this project but it is pretty annoying in practice and would 
 not scale at all. Loading maps from a `.txt` file at runtime would fix 
 this completely and is something I would add with more time.
-
-### OPEN List Performance
-The OPEN list is a `std::vector<Node>` which means every iteration has to scan the whole list to find the lowest f node. That is O(n) per iteration. For the small 5x5 maps I am using it makes no difference at all, but on a bigger grid with hundreds of nodes it would get slow fast. Replacing it with a `std::priority_queue` would bring it down to O(log n) and is the standard way to do it properly.
 
 ### Small Map Size
 All three maps are 5x5 grids which is fine for testing that the algorithm is correct but too small to really show what A* can do. The whole point of A* is handling larger search spaces efficiently and the current maps do not demonstrate that at all.
